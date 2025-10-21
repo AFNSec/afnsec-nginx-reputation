@@ -1,1 +1,174 @@
 
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>Access blocked · AFNSec Reputation</title>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="robots" content="noindex,nofollow" />
+<style>
+  /* ===== AFNSec minimal light theme ===== */
+  :root{
+    --bg:#f7f9fb;
+    --surface:#ffffff;
+    --ink:#0e161b;
+    --muted:#5b6570;
+    --border:#e5edf3;
+    --shadow:0 6px 20px rgba(3,18,14,.06);
+    --radius:14px;
+    --accent-red:#d94b43;
+    --mono:#0f1a21;
+    --mono-bg:#f2f6f9;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; background:var(--bg); color:var(--ink);
+    font:16px/1.65 system-ui,-apple-system,"Segoe UI",Roboto,Helvetica,Arial;
+    -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+    display:flex; align-items:center; justify-content:center;
+    padding:36px 20px;
+  }
+
+  /* Centered, single column for perfect alignment */
+  .wrap{ width:min(780px, 100%); }
+
+  /* Header */
+  .hero{
+    text-align:center; margin-bottom:18px; padding-bottom:14px;
+    border-bottom:1px solid var(--border);
+  }
+  .hero-icon{
+    width:84px; height:84px; margin:0 auto 10px; border-radius:20px;
+    display:grid; place-items:center;
+    background:linear-gradient(180deg, rgba(217,75,67,.08), rgba(217,75,67,.02));
+    border:1px solid rgba(217,75,67,.14);
+  }
+  .hero-icon svg{ width:46px; height:46px; display:block }
+  .hero h1{
+    margin:6px 0 6px; font-size:28px; line-height:1.25; font-weight:800; letter-spacing:.2px;
+  }
+  .hero p{ margin:0; color:var(--muted); font-size:14px }
+
+  /* Card */
+  .card{
+    background:var(--surface); border:1px solid var(--border); border-radius:var(--radius);
+    box-shadow:var(--shadow); padding:20px 20px;
+  }
+
+  /* Sections */
+  .sec{ margin-top:16px }
+  .sec:first-of-type{ margin-top:0 }
+  .sec h2{
+    margin:0 0 6px; font-size:16px; line-height:1.4; font-weight:800;
+  }
+  .sec p{ margin:0; color:var(--muted) }
+
+  /* Details block */
+  .code{
+    margin-top:12px; background:var(--mono-bg); border:1px solid var(--border);
+    border-radius:10px; padding:12px;
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+    font-size:14px; color:var(--mono); white-space:pre-wrap;
+  }
+  .controls{ display:flex; justify-content:flex-start; margin-top:10px }
+  .btn{
+    appearance:none; border:1px solid var(--border); background:#fff;
+    padding:9px 12px; border-radius:10px; cursor:pointer; font-weight:600;
+    box-shadow:0 3px 10px rgba(3,18,14,.04);
+  }
+  .btn:active{ transform:translateY(1px) }
+
+  /* Key/Value grid */
+  .kv-grid{
+    margin-top:14px; display:grid; grid-template-columns:1fr 1fr; gap:10px;
+  }
+  @media (max-width:640px){ .kv-grid{ grid-template-columns:1fr } }
+  .kv{
+    border:1px dashed var(--border); border-radius:10px; padding:10px 12px; background:#fff;
+  }
+  .kv h3{
+    margin:0 0 4px; font-size:12px; color:var(--muted); letter-spacing:.08em; text-transform:uppercase;
+  }
+  .kv div{
+    font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace; font-size:14px; color:var(--mono);
+  }
+
+  /* Footer */
+  .foot{
+    margin-top:16px; padding-top:14px; border-top:1px solid var(--border);
+    text-align:center; color:var(--muted); font-size:13px;
+  }
+  .foot a{ color:#176e58; text-decoration:none } .foot a:hover{ text-decoration:underline }
+</style>
+</head>
+<body>
+  <main class="wrap" role="main" aria-labelledby="t">
+    <header class="hero">
+      <div class="hero-icon" aria-hidden="true">
+        <!-- clean alert icon (inline SVG) -->
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          <rect x="2" y="2" width="20" height="20" rx="5" stroke="rgba(217,75,67,.35)" stroke-width="1.5"/>
+          <path d="M12 7v6" stroke="var(--accent-red)" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="12" cy="15.8" r="1.05" fill="var(--accent-red)"/>
+        </svg>
+      </div>
+      <h1 id="t">Access blocked by security policy</h1>
+      <p>Your request was blocked by AFNSec Reputation Enforcement to protect this service.</p>
+    </header>
+
+    <section class="card">
+      <div class="sec">
+        <h2>Why it happened</h2>
+        <p>Your IP has been flagged based on global threat intelligence and behavioral indicators consistent with abusive or malicious activity.</p>
+      </div>
+
+      <div class="sec">
+        <h2>What to do</h2>
+        <p>If your request is legitimate, contact the site administrator and include the details below so we can investigate.</p>
+
+        <div class="code" id="details">IP {{ip}}
+Blocked on {{ts}}
+Request ID {{req_id}}
+Reason: {{reason}}</div>
+        <div class="controls">
+          <button class="btn" id="copyBtn" type="button" title="Copy details">Copy details</button>
+        </div>
+
+        <div class="kv-grid" aria-hidden="false">
+          <div class="kv"><h3>Client IP</h3><div>{{ip}}</div></div>
+          <div class="kv"><h3>Request ID</h3><div>{{req_id}}</div></div>
+          <div class="kv"><h3>Time (UTC)</h3><div>{{ts}}</div></div>
+          <div class="kv"><h3>Reason</h3><div>{{reason}}</div></div>
+        </div>
+      </div>
+
+      <div class="foot">
+        Protected by <strong>AFNSec Reputation Enforcement</strong> ·
+        <a href="mailto:secops@afnsec.com">secops@afnsec.com</a> ·
+        <a href="https://intel.afnsec.com" rel="noopener">intel.afnsec.com</a>
+      </div>
+    </section>
+  </main>
+
+<script>
+  (function () {
+    var btn=document.getElementById('copyBtn'); var box=document.getElementById('details');
+    if(!btn||!box) return;
+    btn.addEventListener('click', function(){
+      var text=box.innerText.trim();
+      if(navigator.clipboard && navigator.clipboard.writeText){
+        navigator.clipboard.writeText(text).then(done,fail);
+      }else{
+        var ta=document.createElement('textarea'); ta.value=text;
+        ta.style.position='fixed'; ta.style.left='-9999px'; document.body.appendChild(ta);
+        ta.select(); try{document.execCommand('copy'); done();}catch(e){fail();}
+        document.body.removeChild(ta);
+      }
+    });
+    function done(){ btn.textContent='Copied'; setTimeout(function(){btn.textContent='Copy details'},2200); }
+    function fail(){ btn.textContent='Copy failed'; setTimeout(function(){btn.textContent='Copy details'},2200); }
+  })();
+</script>
+</body>
+</html>
