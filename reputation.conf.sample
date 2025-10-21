@@ -1,0 +1,46 @@
+# === AFNSec-Nginx-Reputation configuration example ===
+# Copy this to /etc/afnsec-reputation/reputation.conf
+# and edit as needed. Make sure to set file permissions to 600.
+
+# Required: API key for AFNSec Intel API
+API_KEY=<your_api_key_here>
+
+# Which verdicts should be blocked:
+#   malicious | suspicious | malicious,suspicious | all (alias for malicious,suspicious)
+AFNSEC_VERDICT=malicious,suspicious
+
+# Timeout for AFNSec API request (ms)
+# Budget for connect + TLS handshake + read.
+REQUEST_TIMEOUT=1500
+
+# Comma-separated URI prefixes to bypass checks (optional)
+# e.g. /healthz,/status,/assets
+EXCLUDE_LOCATION=/healthz,/status,/assets
+
+# Default cache TTL in seconds (used if API doesn't provide a TTL)
+AFNSEC_CACHE_EXPIRATION=600
+
+# Path to the HTML block page template
+AFNSEC_BLOCK_TEMPLATE_PATH=/var/www/afnsec/block.html
+
+# Fail mode on AFNSec outage/timeouts:
+#   open  = allow traffic (fail-open, recommended)
+#   closed= block traffic (fail-closed)
+FAIL_MODE=open
+
+# Respect X-Forwarded-For from trusted proxies (see NGINX set_real_ip_from config)
+#   on  = use client IP from XFF (when behind a trusted proxy/CDN)
+#   off = use direct connection IP (default if not behind proxy)
+RESPECT_XFF=on
+
+# Logging level for AFNSec decisions:
+#   info  = standard (live_block, cache_block, api_fail_allow)
+#   debug = includes live_allow/cache_allow (verbose)
+LOG_LEVEL=info
+
+# Note:
+# Ensure the following are configured in nginx.conf (inside http{}):
+#   lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
+#   lua_ssl_verify_depth 3;
+#   resolver 1.1.1.1 1.0.0.1 9.9.9.9 valid=300s ipv6=off;
+#   resolver_timeout 2s;
