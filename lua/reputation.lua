@@ -239,7 +239,7 @@ function _M.enforce()
   local took = math.floor((ngx.now()-start)*1000)
   if cfg.VERDICT_SET[verdict] then
     log("info", "live_block", { ip=ip, verdict=verdict, cache="miss", req_id=req_id, latency_ms=took })
-    return render_block({ ip=ip, verdict=verdict, req_id=req_id, ts=os.date("!%Y-%m-%dT%H:%M:%SZ") })
+    return render_block({ ip=ip, verdict=verdict, req_id=req_id, ts=os.date("!%Y-%m-%dT%H:%M:%SZ"), reason="IP reputation match"})
   else
     log("debug", "live_allow", { ip=ip, verdict=verdict, cache="miss", req_id=req_id, latency_ms=took })
     return
