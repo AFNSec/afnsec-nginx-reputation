@@ -23,12 +23,15 @@ AFNSec-Nginx-Reputation runs natively inside NGINX using Lua to block malicious 
 
 ⚙️ Compatibility
 NGINX Build	Works	Notes
-Ubuntu nginx (apt install nginx libnginx-mod-http-lua)	✅ Supported	Recommended — includes dynamic Lua/NDK modules
+Ubuntu nginx (apt install nginx libnginx-mod-http-lua)	
+✅ Supported	Recommended — includes dynamic Lua/NDK modules
 OpenResty	✅ Supported	Lua built-in; no extra steps
 nginx.org builds (nginx.org/packages)	❌ Not supported	Missing Lua module — will not work
 Custom nginx + lua-nginx-module	⚙️ Advanced	Must compile Lua module manually and rebuild on updates
 
 ⚠️ If your system uses the nginx.org repo, remove it and install Ubuntu’s nginx or OpenResty.
+
+Email AFNSec SOC for API KEY
 
 🧩 Installation
 For Ubuntu (Recommended)
