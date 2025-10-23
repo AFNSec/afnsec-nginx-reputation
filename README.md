@@ -18,24 +18,15 @@ Enterprise-grade NGINX + Lua reputation enforcement module for AFNSec.
 AFNSec-Nginx-Reputation
 
 Enterprise-grade IP reputation enforcement for NGINX powered by the AFNSec Intel API.
-This module queries the AFNSec reputation service in real time to block known malicious or suspicious IPs before they reach your app.
 
-⚙️ Overview
+This module integrates directly into NGINX using Lua to block malicious or suspicious IPs in real time — before traffic reaches your application.
 
-AFNSec-Nginx-Reputation runs entirely inside NGINX using Lua.
-It performs lightweight lookups to https://api.afnsec.com/api/v1/ip/{ip} and caches results locally for rapid enforcement.
-
-🧾 Compatibility Notice
-
-This module requires NGINX compiled with the Lua module.
-
+🧩 Compatibility
 Build Source	Works	Notes
-Ubuntu official nginx (apt install nginx libnginx-mod-http-lua)	✅ Supported	Recommended and simplest
-OpenResty	✅ Supported	Lua built in by default
-nginx.org repository builds (http://nginx.org/packages/ubuntu)	❌ Not supported	Those binaries do not include Lua
-Custom-built nginx with ngx_http_lua_module	⚙️ Supported	Must compile lua-nginx-module + ndk manually
-
-If you use nginx.org’s repo, you must switch to Ubuntu’s nginx packages or use OpenResty.
+Ubuntu nginx (apt install nginx libnginx-mod-http-lua)	✅	Recommended – includes dynamic Lua/NDK modules
+OpenResty	✅	Lua built-in; works out of the box
+nginx.org builds (nginx.org/packages)	❌	Not supported – lacks Lua module
+Custom nginx build with Lua	⚙️	Supported only if you manually compile lua-nginx-module + ndk
 
 🧩 Requirements
 
@@ -49,63 +40,73 @@ AFNSec Intel API key
 
 Optional: Cloudflare or similar proxy (for client IP forwarding)
 
-🛠️ Installation (Ubuntu nginx build)
+
+💡 If your nginx install came from nginx.org, remove that repo and use Ubuntu’s nginx or OpenResty.
+
+📦 Directory Layout
+afnsec-nginx-reputation/
+├── lua/
+│   ├── reputation.lua              # Core Lua logic
+│   └── util.lua                    # Utility helpers
+├── conf/
+│   ├── afnsec-reputation.conf      # Global loader (http{} init + cache)
+│   └── reputation.conf.example     # Sample config (no secrets)
+└── html/
+    └── block.html                  # Minimal white AFNSec block page
+
+⚙️ Installation (Ubuntu 22/24 LTS)
+1️⃣ Install Required Packages
 sudo apt update
 sudo apt install -y nginx libnginx-mod-http-lua libnginx-mod-http-ndk lua-cjson ca-certificates
 sudo update-ca-certificates
 
+2️⃣ Enable Dynamic Modules
 
-Verify Lua support:
+Ubuntu’s nginx uses dynamic Lua modules, so ensure they load at startup:
 
-nginx -V 2>&1 | grep http_lua_module
+# Create module loader snippets if missing
+echo 'load_module /usr/lib/nginx/modules/ndk_http_module.so;'     | sudo tee /etc/nginx/modules-enabled/50-mod-http-ndk.conf
+echo 'load_module /usr/lib/nginx/modules/ngx_http_lua_module.so;' | sudo tee /etc/nginx/modules-enabled/50-mod-http-lua.conf
+
+# Ensure the directory is included near the top of nginx.conf
+grep -q 'modules-enabled' /etc/nginx/nginx.conf || \
+sudo sed -i '1 a include /etc/nginx/modules-enabled/*.conf;' /etc/nginx/nginx.conf
 
 
-If you don’t see it, you’re on an incompatible nginx build.
+🔴 If you skip this step, NGINX will say:
+unknown directive "access_by_lua_block"
 
-🗂️ Directory layout
-/usr/local/share/afnsec-reputation/   → Lua engine files (reputation.lua, util.lua)
-/etc/afnsec-reputation/               → Runtime configuration (reputation.conf)
-/etc/nginx/conf.d/                    → NGINX includes (afnsec-reputation.conf)
-/var/www/afnsec/                      → Block page (block.html)
-/var/log/nginx/afnsec-reputation.log  → Per-site log
+3️⃣ Add Resolver and CA Trust (inside http {})
 
-⚙️ Setup Steps
-1. Create directories
-sudo mkdir -p /etc/afnsec-reputation /usr/local/share/afnsec-reputation /var/www/afnsec
+Open /etc/nginx/nginx.conf and make sure these lines exist inside the http block:
 
-2. Copy files
-
-From this repo:
-
-sudo cp lua/*.lua /usr/local/share/afnsec-reputation/
-sudo cp conf/afnsec-reputation.conf /etc/nginx/conf.d/
-sudo cp html/block.html /var/www/afnsec/
-
-3. Create configuration
-sudo tee /etc/afnsec-reputation/reputation.conf >/dev/null <<'EOF'
-API_KEY=<your_api_key_here>
-AFNSEC_VERDICT=malicious,suspicious
-REQUEST_TIMEOUT=1500
-EXCLUDE_LOCATION=/healthz,/status,/assets
-AFNSEC_CACHE_EXPIRATION=600
-AFNSEC_BLOCK_TEMPLATE_PATH=/var/www/afnsec/block.html
-FAIL_MODE=open
-RESPECT_XFF=on
-LOG_LEVEL=info
-EOF
-sudo chmod 600 /etc/afnsec-reputation/reputation.conf
-
-🧱 Add to NGINX
-In /etc/nginx/nginx.conf → inside http {}
 lua_ssl_trusted_certificate /etc/ssl/certs/ca-certificates.crt;
 lua_ssl_verify_depth 3;
 resolver 1.1.1.1 1.0.0.1 9.9.9.9 valid=300s ipv6=off;
 resolver_timeout 2s;
 
-In your server {} block
+4️⃣ Deploy AFNSec Files
+sudo mkdir -p /usr/local/share/afnsec-reputation /etc/afnsec-reputation /var/www/afnsec
+
+sudo cp lua/*.lua /usr/local/share/afnsec-reputation/
+sudo cp conf/afnsec-reputation.conf /etc/nginx/conf.d/
+sudo cp html/block.html /var/www/afnsec/
+sudo cp conf/reputation.conf.example /etc/afnsec-reputation/reputation.conf
+sudo chmod 600 /etc/afnsec-reputation/reputation.conf
+
+
+Edit /etc/afnsec-reputation/reputation.conf and set your API key:
+
+sudo nano /etc/afnsec-reputation/reputation.conf
+
+5️⃣ Add Enforcement to Your Site
+
+Edit the nginx site you want protected (example: /etc/nginx/sites-available/default):
+
+# Optional: dedicated AFNSec log
 error_log /var/log/nginx/afnsec-reputation.log info;
 
-# (Optional) Cloudflare trusted proxies
+# Cloudflare proxy IP ranges (if used)
 set_real_ip_from 173.245.48.0/20;
 set_real_ip_from 103.21.244.0/22;
 set_real_ip_from 103.22.200.0/22;
@@ -129,56 +130,67 @@ access_by_lua_block {
   rep.enforce()
 }
 
-✅ Validate
+6️⃣ Reload NGINX
 sudo nginx -t
 sudo systemctl reload nginx
 
-🧪 Test
-# Normal request (should be 200)
+🔍 Verify
+
+Normal traffic:
+
 curl -I https://yourdomain.com
 
-# Simulate malicious IP (from server)
+
+Simulate a blocked IP:
+
 curl -i -H 'X-Forwarded-For: 1.1.1.1' https://yourdomain.com
 
 
-Expected:
+→ Should return 403 Forbidden with the AFNSec block page.
 
-HTTP/1.1 403 Forbidden
-
-
-Check logs:
+Tail logs:
 
 sudo tail -f /var/log/nginx/afnsec-reputation.log
 
-🪪 Log meanings
-Field	Description
-live_block	New API call resulting in a block
-cache_block	Reused cached verdict
-live_allow	New allow decision (debug mode)
-cache_allow	Cached allow decision
-api_fail_allow	API timeout or network error; allowed (fail-open)
-🔒 Security best practices
 
-Protect your API key file:
-/etc/afnsec-reputation/reputation.conf → chmod 600
+You’ll see entries like:
 
-Restrict origin access:
-If behind Cloudflare, firewall your origin to CF IP ranges only.
+{"verdict":"suspicious","msg":"live_block","cache":"miss","ip":"1.1.1.1"}
 
-Rotate logs:
-Use logrotate for /var/log/nginx/afnsec-reputation.log.
+🧾 Log meanings
+Log key	Meaning
+live_block	New block after AFNSec API lookup
+cache_block	Cached verdict triggered a block
+live_allow	New allow decision (debug only)
+cache_allow	Cached clean result
+api_fail_allow	API timeout/failure – allowed (fail-open mode)
+🔒 Security Best Practices
 
-🚫 Troubleshooting
-Symptom	Cause	Fix
-libnginx-mod-http-lua won’t install	Using nginx.org repo	Remove that repo or use OpenResty
-module not found: resty.core	You installed OpenResty LuaRocks packages	Our code doesn’t use resty.*, remove them
-api_fail_allow flood	DNS/TLS issue	Verify resolver + CA bundle in nginx.conf
-🧰 Uninstall
-sudo rm -rf /etc/afnsec-reputation /usr/local/share/afnsec-reputation /var/www/afnsec
-sudo rm /etc/nginx/conf.d/afnsec-reputation.conf
-sudo systemctl reload nginx
+Keep /etc/afnsec-reputation/reputation.conf at chmod 600.
 
-🧾 License
+Restrict origin access to Cloudflare IPs if you proxy through CF.
 
-Copyright © AFNSec
-Proprietary – for authorized AFNSec partners and enterprise clients only.
+Logrotate /var/log/nginx/afnsec-reputation.log if large.
+
+Fail-open mode (FAIL_MODE=open) prevents downtime during AFNSec API outages.
+
+🧰 Troubleshooting
+
+unknown directive "access_by_lua_block"
+→ Add this line at the top of /etc/nginx/nginx.conf:
+
+include /etc/nginx/modules-enabled/*.conf;
+
+
+libnginx-mod-http-lua won’t install / dependency conflict
+→ You’re using nginx.org packages. Remove that repo and reinstall Ubuntu’s nginx.
+
+api_fail_allow flooding logs
+→ Network or resolver issue. Verify your DNS and CA trust lines inside http {}.
+
+🧾 License & Credits
+
+© AFNSec. All rights reserved.
+Enterprise use only.
+For support: secops@afnsec.com
+ | intel.afnsec.com
