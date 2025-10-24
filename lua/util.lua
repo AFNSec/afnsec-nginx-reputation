@@ -1,4 +1,3 @@
-
 local _M = {}
 
 local cjson = require "cjson.safe"
@@ -79,5 +78,25 @@ end
 
 function _M.json_encode(x) return cjson.encode(x) end
 function _M.json_decode(s) return cjson.decode(s) end
+
+-- Private/loopback/link-local/CGN/multicast detection (basic)
+function _M.is_private_ip(ip)
+  if not ip then return true end
+  -- IPv4
+  if ip:match("^127%.") then return true end
+  if ip:match("^10%.") then return true end
+  if ip:match("^192%.168%.") then return true end
+  local a,b = ip:match("^(%d+)%.(%d+)%.")
+  a = tonumber(a or "0"); b = tonumber(b or "0")
+  if a == 172 and b >= 16 and b <= 31 then return true end
+  if a == 169 and b == 254 then return true end
+  if a == 100 and b >= 64 and b <= 127 then return true end
+  if a >= 224 and a <= 239 then return true end
+  -- IPv6 (loopback, ULA, link-local)
+  if ip:match("^::1$") then return true end
+  if ip:match("^fc[0-9a-fA-F]") or ip:match("^fd[0-9a-fA-F]") then return true end
+  if ip:match("^fe80:") then return true end
+  return false
+end
 
 return _M
