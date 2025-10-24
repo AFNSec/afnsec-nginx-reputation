@@ -1,4 +1,3 @@
-
 local util  = require "util"
 local cjson = require "cjson.safe"
 
@@ -163,7 +162,66 @@ function _M.global_init(path)
   end
 end
 
+-- Health probe (runs once per worker) — echoes once later in enforce()
+local function health_probe()
+  local headers = {
+    ["User-Agent"] = "AFNSec-Nginx-Reputation/1.0",
+    ["Accept"]     = "application/json",
+  }
+  local t0 = ngx.now()
+  local res, err = https_get("api.afnsec.com", "/healthz", headers, 1200)
+  local took = math.floor((ngx.now()-t0)*1000)
+
+  if not res then
+    log("warn", "api_health", { status = "fail", error = err or "unknown", latency_ms = took })
+    if cache then
+      cache:set("health:last_status", "fail", 300)
+      cache:set("health:last_latency_ms", took, 300)
+      cache:set("health:echo_needed", 1, 300)
+    end
+    -- one backoff retry
+    ngx.sleep(0.5)
+    t0 = ngx.now()
+    res, err = https_get("api.afnsec.com", "/healthz", headers, 1200)
+    took = math.floor((ngx.now()-t0)*1000)
+    if not res then
+      log("warn", "api_health", { status = "fail", error = err or "unknown", latency_ms = took })
+      return
+    end
+  end
+
+  if res.status < 200 or res.status >= 300 then
+    log("warn", "api_health", { status = "fail:"..tostring(res.status), latency_ms = took })
+    if cache then
+      cache:set("health:last_status", "fail", 300)
+      cache:set("health:last_latency_ms", took, 300)
+      cache:set("health:echo_needed", 1, 300)
+    end
+    return
+  end
+
+  local j, derr = cjson.decode(res.body or "")
+  if not j or j.ok ~= true then
+    log("warn", "api_health", { status = "fail", error = "unexpected payload", latency_ms = took })
+    if cache then
+      cache:set("health:last_status", "fail", 300)
+      cache:set("health:last_latency_ms", took, 300)
+      cache:set("health:echo_needed", 1, 300)
+    end
+    return
+  end
+
+  log("info", "api_health", { status = "ok", latency_ms = took })
+  if cache then
+    cache:set("health:last_status", "ok", 600)
+    cache:set("health:last_latency_ms", took, 600)
+    cache:set("health:echo_needed", 1, 600)
+  end
+end
+
 function _M.worker_init()
+  -- run the health probe once per worker (logs to global error log)
+  ngx.timer.at(0, function(_) pcall(health_probe) end)
   -- timers/circuit-breakers could be set here later
 end
 
@@ -182,6 +240,17 @@ function _M.healthz()
 end
 
 function _M.enforce()
+  -- Echo the startup health result ONCE into the per-site error_log
+  do
+    local echo = cache and cache:get("health:echo_needed")
+    if echo then
+      local hs   = cache:get("health:last_status") or "unknown"
+      local hlat = tonumber(cache:get("health:last_latency_ms") or 0)
+      log("info", "api_health", { status = hs, latency_ms = hlat, echo = true })
+      if cache and cache.delete then cache:delete("health:echo_needed") end
+    end
+  end
+
   local uri = ngx.var.uri or "/"
   -- hard bypass our own health endpoint
   if uri:sub(1, 25) == "/afnsec-reputation/healthz" then return end
@@ -198,9 +267,7 @@ function _M.enforce()
     local data = cjson.decode(cached)
     if data and cfg.VERDICT_SET[data.verdict] then
       log("info", "cache_block", { ip=ip, verdict=data.verdict, cache="hit", req_id=req_id, latency_ms=math.floor((ngx.now()-start)*1000) })
-       -- return render_block({ ip=ip, verdict=data.verdict, req_id=req_id, ts=os.date("!%Y-%m-%dT%H:%M:%SZ") })
-       return render_block({ ip = ip, verdict = verdict, req_id = req_id, ts = os.date("!%Y-%m-%dT%H:%M:%SZ"), reason = "IP reputation match"})
-
+      return render_block({ ip = ip, verdict = verdict, req_id = req_id, ts = os.date("!%Y-%m-%dT%H:%M:%SZ"), reason = "IP reputation match"})
     else
       log("debug", "cache_allow", { ip=ip, verdict=data and data.verdict or "unknown", cache="hit", req_id=req_id, latency_ms=math.floor((ngx.now()-start)*1000) })
       return
