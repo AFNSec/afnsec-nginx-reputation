@@ -6,8 +6,8 @@ set -euo pipefail
 # Quiet-by-default with full transcript at /var/log/afnsec-install.log
 # =========================
 
-TARBALL_URL="https://github.com/theewick/afnsec-nginx-reputation/archive/refs/tags/v1.0.0.tar.gz"
-TARBALL_NAME="afnsec-nginx-reputation-v1.0.0.tar.gz"
+TARBALL_URL="https://github.com/theewick/afnsec-nginx-reputation/archive/refs/tags/v1.0.1.tar.gz"
+TARBALL_NAME="afnsec-nginx-reputation-v1.0.1.tar.gz"
 WORKDIR="$(mktemp -d /tmp/afnsec-install-XXXXXX)"
 LOG_FILE="/var/log/afnsec-install.log"
 QUIET=1      
