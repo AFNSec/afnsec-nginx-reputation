@@ -25,6 +25,16 @@ Protects all vhosts by querying AFNSec’s live intelligence service before requ
 ⚙️ Installation
 
 1️⃣ Clone & install
+
+#Install latest stable version v1.0.0 (Recommended)
+```bash
+curl -L -o afnsec-nginx-reputation-v1.0.0.tar.gz https://github.com/AFNSec/afnsec-nginx-reputation/archive/refs/tags/v1.0.0.tar.gz
+tar -xzf afnsec-nginx-reputation-v1.0.0.tar.gz
+sudo chmod +x install.sh
+sudo ./install.sh
+```
+#Install absolutely latest code (Not recommended)
+
 ```bash
 sudo apt update
 sudo apt install -y git
@@ -46,7 +56,7 @@ sudo ./install.sh --verbose
 To completely remove AFNSec and optionally Lua packages:
 
 ```bash
-cd afnsec-nginx-reputation
+cd afnsec-nginx-reputatio-*
 sudo chmod +x uninstall.sh
 sudo ./uninstall.sh
 ```
