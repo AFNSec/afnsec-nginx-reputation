@@ -30,6 +30,7 @@ Protects all vhosts by querying AFNSec’s live intelligence service before requ
 ```bash
 curl -L -o afnsec-nginx-reputation-v1.0.0.tar.gz https://github.com/AFNSec/afnsec-nginx-reputation/archive/refs/tags/v1.0.0.tar.gz
 tar -xzf afnsec-nginx-reputation-v1.0.0.tar.gz
+cd afnsec-nginx-reputation-v1.0.0.tar.gz
 sudo chmod +x install.sh
 sudo ./install.sh
 ```
