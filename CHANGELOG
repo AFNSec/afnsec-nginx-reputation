@@ -1,0 +1,54 @@
+Release date: 2025-10-25
+Repository: theewick/afnsec-nginx-reputation
+
+✨ Added
+
+Quiet-mode Installer:
+Default silent installation (install.sh) with full transcript logged to /var/log/afnsec-install.log.
+Use --verbose for live output.
+
+Package Verification:
+Now verifies nginx, libnginx-mod-http-lua, libnginx-mod-http-ndk, and lua-cjson are fully installed and working before proceeding.
+
+Active Lua Probe:
+Tests Lua directives (lua_ssl_trusted_certificate, lua_ssl_verify_depth) in a temporary config before modifying your production nginx.conf.
+
+Smart NGINX.conf Injection:
+
+Injects only inside http{} (no global leakage).
+
+Skips adding resolver or resolver_timeout if already present.
+
+Adds CA trust lines and global error_log info only if missing.
+
+Self-healing & rollback:
+Automatically backs up nginx.conf before changes and restores if validation fails.
+
+API-key prompt:
+Secure hidden input before install.
+
+Logging:
+Structured [INFO]/[WARN]/[ERROR] messages and error tails for quick diagnostics.
+
+🧹 Unchanged
+
+Enforcement logic and Lua policy identical to v1.0.0.
+
+Compatible with Ubuntu 22.04 and 24.04 only.
+
+🪲 Fixed
+
+Module-loading order causing unknown directive errors.
+
+Broken install on systems missing /etc/nginx/modules-enabled.
+
+Extraction failures under pipefail due to head SIGPIPE.
+
+Re-installation now handles dpkg rc states (removed-but-not-purged).
+
+🚀 Recommended upgrade path
+
+If upgrading from v1.0.0:
+
+sudo ./uninstall.sh
+sudo ./install.sh
