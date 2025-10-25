@@ -13,7 +13,7 @@ Enterprise-grade NGINX + Lua reputation enforcement module for AFNSec.
 | `html/block.html` | Minimal white block page |
 | `/etc/afnsec-reputation/reputation.conf` | contains API key and policy |
 
-## This application intergration only supports Nginx compiled with Lua. Only ubuntu apt packages for nginx will work because it comes prepackaged with Lua support.
+## This application intergration only supports Nginx compiled with Lua. Only ubuntu apt packages for nginx will work because it comes prepackaged with Lua support. Advanced users can properly bypass this warning and compile lua with nginx.org direct install.
 
 ## Deployment
 
