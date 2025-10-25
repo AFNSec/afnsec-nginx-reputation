@@ -11,7 +11,9 @@ Enterprise-grade NGINX + Lua reputation enforcement module for AFNSec.
 | `conf/afnsec-reputation.conf` | Global http{} loader (init + cache) |
 | `conf/afnsec-reputation-site.conf` | Example TLS site |
 | `html/block.html` | Minimal white block page |
-| `/etc/afnsec-reputation/reputation.conf` | **Not committed** – contains API key and policy |
+| `/etc/afnsec-reputation/reputation.conf` | contains API key and policy |
+
+## This application intergration only supports Nginx compiled with Lua. Only ubuntu apt packages for nginx will work because it comes prepackaged with Lua support.
 
 ## Deployment
 
