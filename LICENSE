@@ -1,0 +1,26 @@
+AFNSec-Nginx-Reputation License
+Version 1.0 – October 2025
+
+Copyright (c) 2025 AFNSec && AFNEdge
+
+This software and accompanying materials are provided free of charge for 
+personal, academic, or internal business use. Redistribution, modification, 
+reverse engineering, or resale of this software in any form, including 
+derivative works, are strictly prohibited without written permission from AFNSec.
+
+You may:
+- Download and install this software for evaluation or internal use.
+- Integrate it within your own NGINX deployment for security enforcement.
+- Share unmodified copies internally within your organization.
+
+You may not:
+- Modify or distribute the code publicly.
+- Host derivative or altered versions.
+- Use this software to create a competing commercial service.
+
+THE SOFTWARE IS PROVIDED "AS IS" WITHOUT WARRANTY OF ANY KIND, EXPRESS OR 
+IMPLIED. AFNSEC SHALL NOT BE LIABLE FOR ANY DAMAGES ARISING FROM THE USE OF 
+THIS SOFTWARE.
+
+For commercial licensing or partnership inquiries, contact:
+security@afnsec.com
