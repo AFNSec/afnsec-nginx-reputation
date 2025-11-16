@@ -39,7 +39,7 @@ sudo ./install.sh
 ```bash
 sudo apt update
 sudo apt install -y git
-git clone https://github.com/theewick/afnsec-nginx-reputation.git
+git clone https://github.com/AFNSec/afnsec-nginx-reputation.git
 cd afnsec-nginx-reputation
 sudo chmod +x install.sh
 sudo ./install.sh
