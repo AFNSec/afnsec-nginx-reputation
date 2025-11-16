@@ -3,7 +3,6 @@ set -euo pipefail
 
 # =========================
 # AFNSec-Nginx-Reputation Installer (Global Enforcement for ALL vhosts)
-# Quiet-by-default with full transcript at /var/log/afnsec-install.log
 # =========================
 
 TARBALL_URL="https://github.com/AFNSec/afnsec-nginx-reputation/archive/refs/tags/v1.0.0.tar.gz"
