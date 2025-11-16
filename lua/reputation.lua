@@ -30,13 +30,12 @@ local function normalize()
   cfg.RESPECT_XFF                = ((cfg.RESPECT_XFF or "on"):lower() == "on")
   cfg.LOG_LEVEL                  = (cfg.LOG_LEVEL or "info"):lower()
 
-  -- exclusions
   local excl = util.split_csv(cfg.EXCLUDE_LOCATION or "")
   cfg.EXCLUDE_SET = {}
   for _, pfx in ipairs(excl) do
     if pfx and pfx ~= "" then cfg.EXCLUDE_SET[pfx] = true end
   end
-  -- always exclude our own health endpoint
+  -- exclude our own health endpoint
   cfg.EXCLUDE_SET["/afnsec-reputation/healthz"] = true
 
   -- policy
@@ -77,7 +76,6 @@ local function render_block(ctx)
   return ngx.exit(ngx.HTTP_FORBIDDEN)
 end
 
--- HTTPS GET via cosockets (no resty.* deps)
 local function https_get(host, path, headers, timeout_ms)
   local sock = ngx.socket.tcp()
   sock:settimeout(timeout_ms or 1000)
@@ -162,7 +160,6 @@ function _M.global_init(path)
   end
 end
 
--- Health probe (runs once per worker) — echoes once later in enforce()
 local function health_probe()
   local headers = {
     ["User-Agent"] = "AFNSec-Nginx-Reputation/1.0",
@@ -179,7 +176,7 @@ local function health_probe()
       cache:set("health:last_latency_ms", took, 300)
       cache:set("health:echo_needed", 1, 300)
     end
-    -- one backoff retry
+
     ngx.sleep(0.5)
     t0 = ngx.now()
     res, err = https_get("api.afnsec.com", "/healthz", headers, 1200)
@@ -220,9 +217,7 @@ local function health_probe()
 end
 
 function _M.worker_init()
-  -- run the health probe once per worker (logs to global error log)
   ngx.timer.at(0, function(_) pcall(health_probe) end)
-  -- timers/circuit-breakers could be set here later
 end
 
 function _M.healthz()
@@ -240,7 +235,6 @@ function _M.healthz()
 end
 
 function _M.enforce()
-  -- Echo the startup health result ONCE into the per-site error_log
   do
     local echo = cache and cache:get("health:echo_needed")
     if echo then
@@ -261,7 +255,6 @@ function _M.enforce()
   local ip     = util.client_ip(cfg.RESPECT_XFF)
   local ck     = cache_key(ip)
 
-  -- cache hit
   local cached = cache and cache:get(ck)
   if cached then
     local data = cjson.decode(cached)
@@ -274,7 +267,6 @@ function _M.enforce()
     end
   end
 
-  -- live query
   local decision, err = query_api(ip)
   if not decision then
     if cfg.FAIL_MODE == "closed" then
@@ -289,7 +281,6 @@ function _M.enforce()
   local verdict = decision.verdict or "unknown"
   local ttl     = tonumber(decision.ttl) or 0
 
-  -- Per-verdict TTLs with jitter (±10%); fallback to global default
   local verdict_ttls = {
     malicious  = 3600, -- 1 hour
     suspicious = 900,  -- 15 minutes
