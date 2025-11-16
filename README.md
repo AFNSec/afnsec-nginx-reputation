@@ -82,12 +82,5 @@ AFNSec API key	—	Provided by AFNSec SOC
 © 2025 AFNSec — All rights reserved.
 Enterprise internal use only.
 Contact: secops@afnsec.com
- | intel.afnsec.com
 
 🧾 License & Credits
-
-© 2025 AFNSec — All rights reserved | Enterprise use only
-Contact: secops@afnsec.com
-
-Docs: intel.afnsec.com
-
